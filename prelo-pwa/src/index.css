@@ -69,7 +69,7 @@
 
 /* Material Symbols icon style rules */
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: 'Material Symbols Outlined' !important;
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -2143,31 +2143,36 @@ select.form-control {
 }
 
 .nav-raised-btn {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  background: var(--primary-container);
-  color: var(--fav-pink);
-  box-shadow: 0 8px 16px rgba(62, 39, 35, 0.25);
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(62, 39, 35, 0.28);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s, box-shadow 0.2s;
 }
 
 .nav-raised-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
+  box-shadow: 0 6px 18px rgba(62, 39, 35, 0.35);
 }
 
 .nav-raised-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
-.nav-raised-btn .material-symbols-outlined {
-  font-size: 24px;
+.nav-plus-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  stroke: #ffffff;
 }
 
-.nav-item-raised span:last-child {
+.nav-item-raised > .nav-label,
+.nav-item-raised > span:last-child {
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 500;
@@ -2176,7 +2181,13 @@ select.form-control {
   letter-spacing: 0.02em;
 }
 
-.nav-item-raised.active span:last-child {
+.nav-item-raised.active .nav-raised-btn {
+  background: var(--secondary);
+  box-shadow: 0 6px 18px rgba(148, 72, 61, 0.35);
+}
+
+.nav-item-raised.active > .nav-label,
+.nav-item-raised.active > span:last-child {
   color: var(--secondary);
   font-weight: 600;
 }
