@@ -109,7 +109,11 @@ function Categories() {
           </div>
           <div className="product-grid">
             {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
+              <ProductCard
+                key={p.id}
+                product={p}
+                onDelete={(id) => setProducts((prev) => prev.filter((item) => item.id !== id))}
+              />
             ))}
           </div>
         </>

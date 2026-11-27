@@ -85,6 +85,45 @@ function Profile() {
   const [restoringId, setRestoringId] = useState(null);
   const [archiveError, setArchiveError] = useState("");
 
+  // State Statistik Penjualan & Riwayat Belanja
+  const [salesStats, setSalesStats] = useState(() => {
+    try {
+      const saved = localStorage.getItem("prelo_sales_stats");
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return { totalRevenue: 0, totalItemsSold: 0, totalOrders: 0 };
+  });
+
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = localStorage.getItem("prelo_orders");
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // Fallback
+    }
+    return [];
+  });
+
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+
+  // Muat ulang data transaksi setiap kali profil dibuka
+  const refreshOrdersAndStats = () => {
+    try {
+      const s = localStorage.getItem("prelo_sales_stats");
+      if (s) setSalesStats(JSON.parse(s));
+      const o = localStorage.getItem("prelo_orders");
+      if (o) setOrders(JSON.parse(o));
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    refreshOrdersAndStats();
+  }, []);
+
   const fileInputRef = useRef(null);
 
   // Auto-dismiss toast setelah 3 detik
@@ -434,11 +473,63 @@ function Profile() {
         )}
 
         {/* ========================================================
+            DASHBOARD STATISTIK PENJUALAN & TRANSAKSI BELANJA
+            ======================================================== */}
+        <div className="profile-stats-card">
+          <div className="stats-header">
+            <div className="stats-header-left">
+              <span className="material-symbols-outlined stats-icon">monitoring</span>
+              <span className="stats-title">Ringkasan Penjualan & Belanja</span>
+            </div>
+            <button
+              type="button"
+              className="stats-history-link"
+              onClick={() => setShowOrdersModal(true)}
+            >
+              <span>Riwayat ({orders.length})</span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+          <div className="stats-grid">
+            <div className="stat-box">
+              <span className="stat-label">Total Penjualan</span>
+              <strong className="stat-value revenue">{rupiah(salesStats.totalRevenue)}</strong>
+              <span className="stat-sub">Akumulasi pendapatan</span>
+            </div>
+            <div className="stat-box">
+              <span className="stat-label">Unit Terjual</span>
+              <strong className="stat-value">{salesStats.totalItemsSold} Unit</strong>
+              <span className="stat-sub">Stok gadget keluar</span>
+            </div>
+            <div className="stat-box">
+              <span className="stat-label">Total Belanja</span>
+              <strong className="stat-value">{salesStats.totalOrders} Pesanan</strong>
+              <span className="stat-sub">Transaksi berhasil</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================
             2. MENU PINTASAN AKUN PRELO
             ======================================================== */}
         <div className="profile-menu-section">
           <h3 className="profile-section-title">Menu Cepat</h3>
           <div className="profile-menu-list">
+            {/* Menu Khusus: Riwayat Belanja */}
+            <button
+              type="button"
+              className="profile-menu-item btn-menu-orders"
+              onClick={() => setShowOrdersModal(true)}
+            >
+              <div className="menu-icon-box green">
+                <span className="material-symbols-outlined">receipt_long</span>
+              </div>
+              <div className="menu-text">
+                <strong>Riwayat Transaksi Belanja</strong>
+                <span>Lihat {orders.length} pesanan gadget yang telah dibeli</span>
+              </div>
+              <span className="material-symbols-outlined menu-arrow">chevron_right</span>
+            </button>
             <Link to="/sell" className="profile-menu-item">
               <div className="menu-icon-box primary">
                 <span className="material-symbols-outlined">add_circle</span>
@@ -670,6 +761,113 @@ function Profile() {
                 type="button"
                 className="modal-btn cancel"
                 onClick={() => setShowArchivedModal(false)}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL RIWAYAT TRANSAKSI BELANJA
+          ======================================================== */}
+      {showOrdersModal && (
+        <div
+          className="soft-delete-modal-backdrop"
+          onClick={() => setShowOrdersModal(false)}
+        >
+          <div
+            className="soft-delete-modal-card orders-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="archived-modal-header">
+              <div className="archived-header-title">
+                <span className="material-symbols-outlined header-icon" style={{ background: "#dcfce7", color: "#16a34a" }}>
+                  receipt_long
+                </span>
+                <div>
+                  <h3>Riwayat Transaksi Belanja</h3>
+                  <p>Daftar pembelian gadget yang berhasil diproses</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="archived-close-btn"
+                onClick={() => setShowOrdersModal(false)}
+                title="Tutup"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div className="archived-modal-body">
+              {orders.length === 0 ? (
+                <div className="archived-empty-state">
+                  <span className="material-symbols-outlined empty-icon" style={{ color: "#94a3b8" }}>
+                    shopping_bag
+                  </span>
+                  <h4>Belum Ada Riwayat Belanja</h4>
+                  <p>Kamu belum pernah membeli gadget di Prelo. Jelajahi katalog dan beli gadget impianmu!</p>
+                  <Link
+                    to="/"
+                    className="btn btn-primary"
+                    style={{ marginTop: "12px", display: "inline-flex" }}
+                    onClick={() => setShowOrdersModal(false)}
+                  >
+                    <span>Mulai Belanja</span>
+                    <span className="material-symbols-outlined">arrow_forward</span>
+                  </Link>
+                </div>
+              ) : (
+                <div className="orders-list">
+                  {orders.map((ord) => (
+                    <div key={ord.id} className="order-item-card">
+                      <div className="order-item-header">
+                        <span className="order-inv-badge font-mono">{ord.id}</span>
+                        <span className="order-date">
+                          {new Date(ord.date).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="order-item-body">
+                        <img
+                          src={ord.productImage || PLACEHOLDER_IMG}
+                          alt={ord.productName}
+                          className="order-item-thumb"
+                        />
+                        <div className="order-item-details">
+                          <strong className="order-item-name">{ord.productName}</strong>
+                          <span className="order-item-qty">
+                            {ord.quantity} Unit &times; {rupiah(ord.price)}
+                          </span>
+                          <span className="order-payment-tag">
+                            <span className="material-symbols-outlined">verified</span>
+                            Lunas &bull; {ord.paymentMethod?.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="order-item-total">
+                          <span className="total-lbl">Total Belanja</span>
+                          <strong className="total-val">{rupiah(ord.total)}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="archived-modal-footer">
+              <button
+                type="button"
+                className="modal-btn cancel"
+                onClick={() => setShowOrdersModal(false)}
               >
                 Tutup
               </button>

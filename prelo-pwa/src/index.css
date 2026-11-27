@@ -3673,6 +3673,111 @@ select.form-control {
   }
 }
 
+/* Tombol Aksi Cepat pada Card Produk: Share Link & Hapus */
+.card-floating-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 5;
+}
+
+.card-quick-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(211, 195, 192, 0.4);
+  outline: none;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(62, 39, 35, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 0;
+}
+
+.card-quick-btn .material-symbols-outlined {
+  font-size: 16px !important;
+  line-height: 1;
+}
+
+.card-quick-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(62, 39, 35, 0.16);
+}
+
+.card-quick-btn:active {
+  transform: scale(0.92);
+}
+
+/* Tombol Share Link */
+.card-quick-btn.share {
+  color: var(--primary);
+}
+
+.card-quick-btn.share:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.card-quick-btn.share.copied {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+/* Tombol Hapus Produk */
+.card-quick-btn.delete {
+  color: #dc2626;
+}
+
+.card-quick-btn.delete:hover {
+  background: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+/* Toast notifikasi saat link disalin */
+.card-share-toast {
+  position: absolute;
+  top: 44px;
+  right: 8px;
+  background: rgba(16, 185, 129, 0.95);
+  color: #ffffff;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  white-space: nowrap;
+  animation: cardFadeInDown 0.2s ease-out;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes cardFadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-delete-modal-inner {
+  max-width: 400px;
+}
+
 .nova-card .card-name {
   font-size: 13.5px;
   font-weight: 700;
@@ -5348,6 +5453,487 @@ select.form-control {
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--on-surface-variant);
+}
+
+/* ========================================================
+   FITUR BELANJA, CHECKOUT, DAN DASHBOARD PENJUALAN
+   ======================================================== */
+
+/* Tombol Utama Beli Sekarang */
+.btn-buy-now {
+  background: linear-gradient(135deg, var(--secondary) 0%, #b23a2b 100%);
+  color: #ffffff !important;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(148, 72, 61, 0.3);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: none;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.btn-buy-now:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(148, 72, 61, 0.4);
+}
+
+.btn-buy-now:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-buy-now.out-of-stock,
+.btn-buy-now:disabled {
+  background: #cbd5e1 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Modal Checkout */
+.checkout-modal-card {
+  max-width: 480px;
+}
+
+.modal-icon-circle.buy-circle {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.modal-icon-circle.buy-circle .material-symbols-outlined {
+  font-size: 32px;
+}
+
+/* Ringkasan Produk Checkout */
+.checkout-product-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-container-low);
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  border: 1px solid rgba(211, 195, 192, 0.3);
+}
+
+.checkout-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #ffffff;
+}
+
+.checkout-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.checkout-name {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+
+.checkout-condition {
+  font-size: 11.5px;
+  color: var(--on-surface-variant);
+}
+
+.checkout-unit-price {
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+/* Bagian Jumlah Unit */
+.checkout-qty-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.qty-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.stock-remaining-hint {
+  font-size: 11px;
+  color: var(--outline);
+  text-align: center;
+}
+
+/* Pilihan Pembayaran */
+.payment-method-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.payment-options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+@media (min-width: 480px) {
+  .payment-options-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.payment-pill-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  border: 1.5px solid rgba(211, 195, 192, 0.4);
+  color: var(--on-surface-variant);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.payment-pill-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.payment-pill-btn:hover {
+  border-color: var(--secondary);
+  color: var(--on-surface);
+}
+
+.payment-pill-btn.active {
+  background: rgba(148, 72, 61, 0.08);
+  border-color: var(--secondary);
+  color: var(--secondary);
+  box-shadow: 0 0 0 2px rgba(148, 72, 61, 0.15);
+}
+
+/* Rincian Total Biaya */
+.checkout-total-box {
+  background: #ffffff;
+  border: 1px dashed rgba(211, 195, 192, 0.8);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkout-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--on-surface-variant);
+}
+
+.free-tag {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 11px;
+  background: #dcfce7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.checkout-total-divider {
+  height: 1px;
+  background: rgba(211, 195, 192, 0.4);
+  margin: 4px 0;
+}
+
+.checkout-total-row.grand-total {
+  font-size: 14.5px;
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.grand-price {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  color: var(--secondary);
+}
+
+.buy-confirm-btn {
+  background: linear-gradient(135deg, var(--secondary) 0%, #b23a2b 100%) !important;
+}
+
+/* Modal Nota / Kwitansi Sukses */
+.receipt-modal-card {
+  max-width: 440px;
+}
+
+.receipt-card {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 16px 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(211, 195, 192, 0.4);
+}
+
+.receipt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.receipt-lbl {
+  color: var(--on-surface-variant);
+}
+
+.receipt-val {
+  color: var(--on-surface);
+  font-weight: 600;
+}
+
+.receipt-divider {
+  height: 1px;
+  border-top: 1px dashed rgba(211, 195, 192, 0.7);
+  margin: 4px 0;
+}
+
+.receipt-row.total {
+  font-size: 14.5px;
+}
+
+.total-amt {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+/* DASHBOARD STATISTIK DI PROFIL */
+.profile-stats-card {
+  background: #ffffff;
+  border: 1px solid rgba(211, 195, 192, 0.4);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(211, 195, 192, 0.3);
+  padding-bottom: 10px;
+}
+
+.stats-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats-icon {
+  font-size: 20px;
+  color: var(--secondary);
+}
+
+.stats-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stats-history-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--secondary);
+}
+
+.stats-history-link:hover {
+  text-decoration: underline;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat-box {
+  background: var(--surface-container-low);
+  padding: 12px 10px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.stat-value.revenue {
+  color: var(--secondary);
+}
+
+.stat-sub {
+  font-size: 10px;
+  color: var(--outline);
+}
+
+/* MODAL RIWAYAT BELANJA */
+.orders-modal-card {
+  max-width: 540px;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.order-item-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid rgba(211, 195, 192, 0.4);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.order-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed rgba(211, 195, 192, 0.4);
+  padding-bottom: 8px;
+}
+
+.order-inv-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--surface-container);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.order-date {
+  font-size: 11px;
+  color: var(--outline);
+}
+
+.order-item-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-item-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface-container-low);
+}
+
+.order-item-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.order-item-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--on-surface);
+  line-height: 1.3;
+}
+
+.order-item-qty {
+  font-size: 11.5px;
+  color: var(--on-surface-variant);
+}
+
+.order-payment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.order-payment-tag .material-symbols-outlined {
+  font-size: 13px;
+}
+
+.order-item-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.total-lbl {
+  font-size: 10px;
+  color: var(--outline);
+}
+
+.total-val {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--secondary);
 }
 
 .checkout-modal-card {

@@ -60,6 +60,14 @@ function ProductDetail() {
   const [stockInput, setStockInput] = useState(1);
   const [isUpdatingStock, setIsUpdatingStock] = useState(false);
 
+  // State untuk Fitur Belanja / Checkout Produk
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [buyQty, setBuyQty] = useState(1);
+  const [selectedPayment, setSelectedPayment] = useState("qris");
+  const [isBuying, setIsBuying] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(null);
+  const [checkoutError, setCheckoutError] = useState("");
+
   // Sinkronisasi nilai awal stok
   useEffect(() => {
     if (product) {
@@ -81,6 +89,83 @@ function ProductDetail() {
       alert(err.response?.data?.error || err.response?.data?.message || "Gagal memperbarui stok");
     } finally {
       setIsUpdatingStock(false);
+    }
+  };
+
+  // ========================================================
+  // HANDLER FITUR BELANJA / CHECKOUT PRODUK
+  // ========================================================
+  const handleConfirmPurchase = async () => {
+    setIsBuying(true);
+    setCheckoutError("");
+
+    const currentStock = Number(product?.stock) || 0;
+    const qty = Math.max(1, Math.min(buyQty, currentStock || 1));
+
+    if (currentStock < qty || currentStock <= 0) {
+      setCheckoutError(`Maaf, stok barang tidak mencukupi (tersedia: ${currentStock} unit).`);
+      setIsBuying(false);
+      return;
+    }
+
+    const newStock = currentStock - qty;
+    const totalAmount = (Number(product.price) || 0) * qty;
+
+    try {
+      // 1. Panggil endpoint buy (mengurangi stok di database)
+      try {
+        await api.post(`/products/${id}/buy`, { quantity: qty });
+      } catch (buyErr) {
+        // Fallback update stok via PUT jika endpoint POST belum terdeploy
+        await api.put(`/products/${id}`, { stock: newStock });
+      }
+
+      // 2. Simpan riwayat transaksi & update total penjualan
+      const orderData = {
+        id: `INV-${Date.now().toString().slice(-6)}`,
+        productId: product.id,
+        productName: product.name,
+        productImage: product.image_url,
+        price: Number(product.price) || 0,
+        quantity: qty,
+        total: totalAmount,
+        date: new Date().toISOString(),
+        paymentMethod: selectedPayment,
+        brand: product.brand,
+        condition: product.condition,
+        remainingStock: newStock,
+      };
+
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem("prelo_orders") || "[]");
+        localStorage.setItem("prelo_orders", JSON.stringify([orderData, ...existingOrders]));
+
+        const existingSales = JSON.parse(localStorage.getItem("prelo_sales_stats") || '{"totalRevenue":0,"totalItemsSold":0,"totalOrders":0}');
+        const updatedSales = {
+          totalRevenue: (existingSales.totalRevenue || 0) + totalAmount,
+          totalItemsSold: (existingSales.totalItemsSold || 0) + qty,
+          totalOrders: (existingSales.totalOrders || 0) + 1,
+        };
+        localStorage.setItem("prelo_sales_stats", JSON.stringify(updatedSales));
+      } catch {
+        // LocalStorage fallback
+      }
+
+      // 3. Update stok produk di state secara instan
+      setProduct((prev) => ({
+        ...prev,
+        stock: newStock,
+      }));
+
+      setCheckoutSuccess(orderData);
+    } catch (err) {
+      setCheckoutError(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Gagal memproses pembelian. Pastikan server aktif dan coba lagi."
+      );
+    } finally {
+      setIsBuying(false);
     }
   };
 
@@ -356,8 +441,26 @@ function ProductDetail() {
             </div>
           )}
 
-          {/* Tombol aksi: Favorit, Beri Rating, Atur Stok, Edit, & Hapus */}
+          {/* Tombol aksi: Beli Sekarang, Favorit, Beri Rating, Atur Stok, Edit, & Hapus */}
           <div className="detail-action-buttons">
+            {/* Tombol Utama: Beli Sekarang */}
+            <button
+              type="button"
+              className={`btn btn-block btn-buy-now ${Number(product.stock) <= 0 ? "out-of-stock" : ""}`}
+              onClick={() => {
+                if (Number(product.stock) > 0) {
+                  setBuyQty(1);
+                  setCheckoutError("");
+                  setCheckoutSuccess(null);
+                  setShowCheckoutModal(true);
+                }
+              }}
+              disabled={Number(product.stock) <= 0}
+            >
+              <span className="material-symbols-outlined">shopping_cart_checkout</span>
+              <span>{Number(product.stock) <= 0 ? "Stok Unit Habis" : "Beli Sekarang"}</span>
+            </button>
+
             <button
               className={`btn btn-block ${fav ? "btn-fav active" : "btn-fav"}`}
               onClick={handleFav}
@@ -810,6 +913,261 @@ function ProductDetail() {
                 disabled={isUpdatingStock}
               >
                 {isUpdatingStock ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL CHECKOUT / BELANJA PRODUK
+          ======================================================== */}
+      {showCheckoutModal && !checkoutSuccess && (
+        <div
+          className="soft-delete-modal-backdrop"
+          onClick={() => !isBuying && setShowCheckoutModal(false)}
+        >
+          <div
+            className="soft-delete-modal-card checkout-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header-icon-wrap">
+              <div className="modal-icon-circle buy-circle">
+                <span className="material-symbols-outlined">shopping_bag</span>
+              </div>
+            </div>
+
+            <h3 className="modal-title" style={{ textAlign: "center" }}>Beli Gadget</h3>
+            <p className="modal-desc" style={{ textAlign: "center" }}>
+              Periksa rincian pembelian unit gadget Anda sebelum konfirmasi pembayaran.
+            </p>
+
+            {/* Ringkasan Produk yang Dibeli */}
+            <div className="checkout-product-summary">
+              <img
+                src={product.image_url || PLACEHOLDER_IMG}
+                alt={product.name}
+                className="checkout-thumb"
+              />
+              <div className="checkout-info">
+                <strong className="checkout-name">{product.name}</strong>
+                <span className="checkout-condition">
+                  {product.brand || "Gadget"} &bull; {product.condition}
+                </span>
+                <span className="checkout-unit-price">{rupiah(product.price)} / unit</span>
+              </div>
+            </div>
+
+            {/* Stepper Jumlah Pembelian */}
+            <div className="checkout-qty-section">
+              <span className="qty-label">Jumlah Unit Dibeli:</span>
+              <div className="stock-stepper-box">
+                <button
+                  type="button"
+                  className="stock-step-btn"
+                  onClick={() => setBuyQty((prev) => Math.max(1, prev - 1))}
+                  disabled={buyQty <= 1 || isBuying}
+                >
+                  <span className="material-symbols-outlined">remove</span>
+                </button>
+                <div className="stock-input-wrap">
+                  <input
+                    type="number"
+                    className="stock-number-input"
+                    value={buyQty}
+                    min={1}
+                    max={Number(product.stock) || 1}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10) || 1;
+                      setBuyQty(Math.max(1, Math.min(val, Number(product.stock) || 1)));
+                    }}
+                    disabled={isBuying}
+                  />
+                  <span className="stock-unit-label">Unit</span>
+                </div>
+                <button
+                  type="button"
+                  className="stock-step-btn"
+                  onClick={() =>
+                    setBuyQty((prev) =>
+                      Math.min(prev + 1, Number(product.stock) || 1)
+                    )
+                  }
+                  disabled={buyQty >= (Number(product.stock) || 1) || isBuying}
+                >
+                  <span className="material-symbols-outlined">add</span>
+                </button>
+              </div>
+              <span className="stock-remaining-hint">
+                Tersisa {product.stock ?? 1} unit di toko
+              </span>
+            </div>
+
+            {/* Pilihan Metode Pembayaran */}
+            <div className="payment-method-section">
+              <span className="qty-label">Metode Pembayaran:</span>
+              <div className="payment-options-grid">
+                {[
+                  { id: "qris", label: "QRIS / E-Wallet", icon: "qr_code_scanner" },
+                  { id: "transfer", label: "Transfer Bank", icon: "account_balance" },
+                  { id: "cod", label: "COD (Bayar di Tempat)", icon: "handshake" },
+                ].map((pay) => (
+                  <button
+                    key={pay.id}
+                    type="button"
+                    className={`payment-pill-btn ${selectedPayment === pay.id ? "active" : ""}`}
+                    onClick={() => setSelectedPayment(pay.id)}
+                    disabled={isBuying}
+                  >
+                    <span className="material-symbols-outlined">{pay.icon}</span>
+                    <span>{pay.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Rincian Total Biaya */}
+            <div className="checkout-total-box">
+              <div className="checkout-total-row">
+                <span>Subtotal ({buyQty} unit)</span>
+                <strong>{rupiah((Number(product.price) || 0) * buyQty)}</strong>
+              </div>
+              <div className="checkout-total-row">
+                <span>Inspeksi Fisik & Garansi Prelo</span>
+                <span className="free-tag">GRATIS</span>
+              </div>
+              <div className="checkout-total-divider" />
+              <div className="checkout-total-row grand-total">
+                <span>Total Pembayaran</span>
+                <strong className="grand-price">
+                  {rupiah((Number(product.price) || 0) * buyQty)}
+                </strong>
+              </div>
+            </div>
+
+            {checkoutError && (
+              <div className="modal-error-alert">
+                <span className="material-symbols-outlined">error</span>
+                <span>{checkoutError}</span>
+              </div>
+            )}
+
+            <div className="modal-actions-row">
+              <button
+                type="button"
+                className="modal-btn cancel"
+                onClick={() => setShowCheckoutModal(false)}
+                disabled={isBuying}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                className="modal-btn confirm buy-confirm-btn"
+                onClick={handleConfirmPurchase}
+                disabled={isBuying}
+              >
+                {isBuying ? (
+                  <>
+                    <span className="material-symbols-outlined spin-icon">sync</span>
+                    <span>Memproses...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined">verified</span>
+                    <span>Bayar Sekarang ({rupiah((Number(product.price) || 0) * buyQty)})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL SUKSES PEMBELIAN / NOTA TRANSAKSI
+          ======================================================== */}
+      {checkoutSuccess && (
+        <div
+          className="soft-delete-modal-backdrop"
+          onClick={() => {
+            setCheckoutSuccess(null);
+            setShowCheckoutModal(false);
+          }}
+        >
+          <div
+            className="soft-delete-modal-card receipt-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header-icon-wrap">
+              <div className="modal-icon-circle success">
+                <span className="material-symbols-outlined">check_circle</span>
+              </div>
+            </div>
+
+            <h3 className="modal-title" style={{ textAlign: "center", color: "#16a34a" }}>
+              Pembelian Berhasil!
+            </h3>
+            <p className="modal-desc" style={{ textAlign: "center" }}>
+              Stok unit telah berkurang & total penjualan telah diperbarui secara otomatis.
+            </p>
+
+            {/* Kartu Nota Transaksi */}
+            <div className="receipt-card">
+              <div className="receipt-row">
+                <span className="receipt-lbl">No. Transaksi</span>
+                <span className="receipt-val font-mono">{checkoutSuccess.id}</span>
+              </div>
+              <div className="receipt-row">
+                <span className="receipt-lbl">Nama Barang</span>
+                <span className="receipt-val">{checkoutSuccess.productName}</span>
+              </div>
+              <div className="receipt-row">
+                <span className="receipt-lbl">Jumlah Dibeli</span>
+                <span className="receipt-val">{checkoutSuccess.quantity} Unit</span>
+              </div>
+              <div className="receipt-row">
+                <span className="receipt-lbl">Sisa Stok Barang</span>
+                <span className="receipt-val font-bold" style={{ color: "#d97706" }}>
+                  {checkoutSuccess.remainingStock} Unit Tersisa
+                </span>
+              </div>
+              <div className="receipt-row">
+                <span className="receipt-lbl">Metode Bayar</span>
+                <span className="receipt-val" style={{ textTransform: "uppercase" }}>
+                  {checkoutSuccess.paymentMethod}
+                </span>
+              </div>
+              <div className="receipt-divider" />
+              <div className="receipt-row total">
+                <span className="receipt-lbl">Total Dibayar</span>
+                <span className="receipt-val total-amt">
+                  {rupiah(checkoutSuccess.total)}
+                </span>
+              </div>
+            </div>
+
+            <div className="modal-actions-row">
+              <button
+                type="button"
+                className="modal-btn cancel"
+                onClick={() => {
+                  setCheckoutSuccess(null);
+                  setShowCheckoutModal(false);
+                }}
+              >
+                Tutup & Lanjut Belanja
+              </button>
+              <button
+                type="button"
+                className="modal-btn confirm"
+                onClick={() => {
+                  setCheckoutSuccess(null);
+                  setShowCheckoutModal(false);
+                  navigate("/profile");
+                }}
+              >
+                Lihat di Profil
               </button>
             </div>
           </div>
