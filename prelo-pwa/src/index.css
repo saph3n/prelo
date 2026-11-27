@@ -5349,3 +5349,26 @@ select.form-control {
   letter-spacing: 0.05em;
   color: var(--on-surface-variant);
 }
+
+.checkout-modal-card {
+  max-height: 90vh;
+  max-height: min(90vh, calc(100vh - 40px));
+  max-height: min(90dvh, calc(100dvh - 40px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.checkout-info {
+  min-width: 0;
+}
+
+.checkout-name {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 540px) {
+  .checkout-modal-card .modal-actions-row {
+    flex-direction: column-reverse;
+  }
+}
